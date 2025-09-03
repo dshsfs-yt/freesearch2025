@@ -21,7 +21,7 @@ import torch
 #    - 출력: cor_sentence (교정 후)
 # =============================================================
 
-CSV_PATH = "pairs.csv"
+CSV_PATH = "pair.csv"
 SAVE_DIR = Path("ckpt/ke-t5-sent-correction")
 MODEL_NAME = "KETI-AIR/ke-t5-small-ko"
 

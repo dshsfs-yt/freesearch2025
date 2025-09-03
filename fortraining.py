@@ -89,6 +89,7 @@ if use_cuda:
 
 print(f"[Load] {CSV_PATH}")
 df = pd.read_csv(CSV_PATH)
+df=df[:80000]
 
 missing = [c for c in [SRC_COL, TGT_COL] if c not in df.columns]
 if missing:

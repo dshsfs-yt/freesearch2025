@@ -29,8 +29,8 @@ RANDOM_SEED = 42
 MAX_SAMPLES = 0            # 0이면 전체 사용
 MAX_SRC_LEN = 256
 MAX_TGT_LEN = 128
-BATCH_TRAIN = 16
-BATCH_EVAL = 16
+BATCH_TRAIN = 8  #배치 사이즈 조절로 메모리 조절
+BATCH_EVAL = 8
 EPOCHS = 3
 LR = 3e-4
 SAVE_STEPS = 500
@@ -243,11 +243,6 @@ args = TrainingArguments(
     report_to="none",
     dataloader_pin_memory=use_cuda,
     optim=optim_choice,
-    predict_with_generate=True,
-    include_logits_in_eval=False,
-    generation_max_length=MAX_TGT_LEN,
-    generation_num_beams=1,
-    eval_accumulation_steps=1,
     **precision_kwargs,
 )
 

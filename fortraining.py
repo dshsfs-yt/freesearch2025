@@ -21,7 +21,7 @@ import torch
 #    - 출력: cor_sentence (교정 후)
 # =============================================================
 
-CSV_PATH = "pair.csv"
+CSV_PATH = "ouput.csv"
 SAVE_DIR = Path("ckpt/ke-t5-sent-correction")
 MODEL_NAME = "KETI-AIR/ke-t5-small-ko"
 
@@ -39,8 +39,8 @@ LOG_STEPS = 50
 PREFIX = "fix: "           # 입력 문장 앞에 붙여 교정 태스크를 명시
 
 # 컬럼 고정
-SRC_COL = "err_sentence"
-TGT_COL = "cor_sentence"
+SRC_COL = "stt_text"
+TGT_COL = "correct_text"
 
 set_seed(RANDOM_SEED)
 SAVE_DIR.mkdir(parents=True, exist_ok=True)

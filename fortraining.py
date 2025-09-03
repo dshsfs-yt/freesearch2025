@@ -243,6 +243,11 @@ args = TrainingArguments(
     report_to="none",
     dataloader_pin_memory=use_cuda,
     optim=optim_choice,
+    predict_with_generate=True,
+    include_logits_in_eval=False,
+    generation_max_length=MAX_TGT_LEN,
+    generation_num_beams=1,
+    eval_accumulation_steps=1,
     **precision_kwargs,
 )
 

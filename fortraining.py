@@ -1,15 +1,15 @@
-
 from pathlib import Path
 from typing import Dict, Any, List, Tuple
 
 import json
+import numpy as np
 import pandas as pd
 from datasets import Dataset, DatasetDict
 from transformers import (
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
     DataCollatorForSeq2Seq,
-    Trainer,
+    Seq2SeqTrainer,          # ✅ Trainer → Seq2SeqTrainer
     TrainingArguments,
     set_seed,
 )
@@ -17,11 +17,11 @@ import torch
 
 # =============================================================
 # 0) 고정 설정 (환경변수 사용 안 함)
-#    - 입력: err_sentence (교정 전)
-#    - 출력: cor_sentence (교정 후)
+#    - 입력: stt_text (교정 전)
+#    - 출력: correct_text (교정 후)
 # =============================================================
 
-CSV_PATH = "ouput.csv"
+CSV_PATH = "ouput.csv"  # ← 실제 파일명이 output.csv라면 수정하세요.
 SAVE_DIR = Path("ckpt/ke-t5-sent-correction")
 MODEL_NAME = "KETI-AIR/ke-t5-small-ko"
 
@@ -29,7 +29,7 @@ RANDOM_SEED = 42
 MAX_SAMPLES = 0            # 0이면 전체 사용
 MAX_SRC_LEN = 256
 MAX_TGT_LEN = 128
-BATCH_TRAIN = 2  #배치 사이즈 조절로 메모리 조절
+BATCH_TRAIN = 2  # 배치 사이즈로 메모리 조절
 BATCH_EVAL = 2
 EPOCHS = 3
 LR = 3e-4
@@ -84,20 +84,19 @@ if use_cuda:
         print(f"[CUDA] info fetch error: {e}")
 
 # =============================================================
-# 2) 데이터 로드/정제 (컬럼 고정: err_sentence, cor_sentence)
+# 2) 데이터 로드/정제
 # =============================================================
 
 print(f"[Load] {CSV_PATH}")
 df = pd.read_csv(CSV_PATH)
-k=20000
-#k=len(df)
-#k=int(k*0.8)
-df=df[:k]
+k = 20000
+df = df[:k]
 
 missing = [c for c in [SRC_COL, TGT_COL] if c not in df.columns]
 if missing:
     raise ValueError(
-        f"CSV에 필요한 컬럼이 없습니다: {missing}. CSV는 반드시 ['err_sentence','cor_sentence'] 두 컬럼을 포함해야 합니다."
+        f"CSV에 필요한 컬럼이 없습니다: {missing}. "
+        f"CSV는 반드시 ['{SRC_COL}','{TGT_COL}'] 두 컬럼을 포함해야 합니다."
     )
 
 if MAX_SAMPLES > 0:
@@ -148,7 +147,6 @@ def make_tokenize_fn(max_src_len=256, max_tgt_len=128):
         lab = tokenizer(text_target=tgt_texts, max_length=max_tgt_len, truncation=True)
         enc["labels"] = lab["input_ids"]
         return enc
-
     return tokenize_function
 
 tokenized = raw_ds.map(
@@ -194,15 +192,18 @@ def _levenshtein(a: List[str], b: List[str]) -> int:
     return dp[n][m]
 
 def compute_metrics(eval_pred):
+    # ✅ Seq2SeqTrainer + predict_with_generate=True 이면 predictions는 생성된 토큰 ID
     preds, labels = eval_pred
-    preds = preds.tolist()
-    labels = labels.tolist()
+    if isinstance(preds, tuple):
+        preds = preds[0]
 
-    labels = [[t for t in l if t != -100] for l in labels]
-    decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
+    # -100을 pad 토큰으로 교체 후 디코딩
+    labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
+
+    decoded_preds  = tokenizer.batch_decode(preds,  skip_special_tokens=True)
     decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
 
-    decoded_preds = [_normalize(p) for p in decoded_preds]
+    decoded_preds  = [_normalize(p) for p in decoded_preds]
     decoded_labels = [_normalize(l) for l in decoded_labels]
 
     total = len(decoded_preds)
@@ -236,7 +237,7 @@ args = TrainingArguments(
     per_device_eval_batch_size=BATCH_EVAL,
     num_train_epochs=EPOCHS,
     learning_rate=LR,
-    eval_strategy="steps",
+    evaluation_strategy="steps",     # ✅ eval_strategy → evaluation_strategy
     eval_steps=EVAL_STEPS,
     save_strategy="steps",
     save_steps=SAVE_STEPS,
@@ -246,10 +247,14 @@ args = TrainingArguments(
     report_to="none",
     dataloader_pin_memory=use_cuda,
     optim=optim_choice,
+    predict_with_generate=True,       # ✅ 생성 기반 평가 활성화
+    generation_max_length=MAX_TGT_LEN,
+    generation_num_beams=1,           # ✅ 메모리 절약
+    eval_accumulation_steps=4,        # ✅ CPU 메모리 완화
     **precision_kwargs,
 )
 
-trainer = Trainer(
+trainer = Seq2SeqTrainer(             # ✅ Seq2SeqTrainer 사용
     model=model,
     args=args,
     train_dataset=tokenized["train"],

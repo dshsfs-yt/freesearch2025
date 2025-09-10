@@ -29,12 +29,12 @@ RANDOM_SEED = 42
 MAX_SAMPLES = 0            # 0이면 전체 사용
 MAX_SRC_LEN = 256
 MAX_TGT_LEN = 128
-BATCH_TRAIN = 8  # 배치 사이즈로 메모리 조절
-BATCH_EVAL = 8
+BATCH_TRAIN = 32  # 배치 사이즈로 메모리 조절
+BATCH_EVAL = 32
 EPOCHS = 3
 LR = 3e-4
-SAVE_STEPS = 20000
-EVAL_STEPS = 20000
+SAVE_STEPS = 2000
+EVAL_STEPS = 2000
 LOG_STEPS = 50
 PREFIX = "fix: "           # 입력 문장 앞에 붙여 교정 태스크를 명시
 
@@ -197,9 +197,16 @@ def compute_metrics(eval_pred):
     if isinstance(preds, tuple):
         preds = preds[0]
 
-    # -100을 pad 토큰으로 교체 후 디코딩
-    labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
+    pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else 0
 
+    # ✅ 정수형으로 강제 캐스팅 후 음수 마스킹값(-100) 치환
+    labels = np.asarray(labels, dtype=np.int64)
+    labels[labels == -100] = pad_id
+
+    # ✅ 혹시 모를 음수 예측값도 방지
+    preds = np.asarray(preds, dtype=np.int64)
+    preds[preds < 0] = pad_id
+    
     decoded_preds  = tokenizer.batch_decode(preds,  skip_special_tokens=True)
     decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
 

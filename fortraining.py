@@ -10,7 +10,7 @@ from transformers import (
     AutoTokenizer,
     DataCollatorForSeq2Seq,
     Seq2SeqTrainer,          # ✅ Trainer → Seq2SeqTrainer
-    TrainingArguments,
+    Seq2SeqTrainingArguments,  # ✅ TrainingArguments → Seq2SeqTrainingArguments
     set_seed,
 )
 import torch
@@ -231,7 +231,7 @@ def compute_metrics(eval_pred):
 
 optim_choice = "adamw_torch_fused" if use_cuda else "adamw_torch"
 
-args = TrainingArguments(
+args = Seq2SeqTrainingArguments(
     output_dir=str(SAVE_DIR),
     per_device_train_batch_size=BATCH_TRAIN,
     per_device_eval_batch_size=BATCH_EVAL,

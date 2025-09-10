@@ -89,7 +89,7 @@ if use_cuda:
 
 print(f"[Load] {CSV_PATH}")
 df = pd.read_csv(CSV_PATH)
-k = 20000
+k=int(len(df)*0.8)
 df = df[:k]
 
 missing = [c for c in [SRC_COL, TGT_COL] if c not in df.columns]

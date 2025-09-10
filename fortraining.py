@@ -33,8 +33,8 @@ BATCH_TRAIN = 2  # 배치 사이즈로 메모리 조절
 BATCH_EVAL = 2
 EPOCHS = 3
 LR = 3e-4
-SAVE_STEPS = 500
-EVAL_STEPS = 500
+SAVE_STEPS = 20000
+EVAL_STEPS = 20000
 LOG_STEPS = 50
 PREFIX = "fix: "           # 입력 문장 앞에 붙여 교정 태스크를 명시
 

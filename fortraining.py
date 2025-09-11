@@ -9,8 +9,8 @@ from transformers import (
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
     DataCollatorForSeq2Seq,
-    Seq2SeqTrainer,          # ✅ Trainer → Seq2SeqTrainer
-    Seq2SeqTrainingArguments,  # ✅ TrainingArguments → Seq2SeqTrainingArguments
+    Seq2SeqTrainer,          #  Trainer → Seq2SeqTrainer
+    Seq2SeqTrainingArguments,  #  TrainingArguments → Seq2SeqTrainingArguments
     set_seed,
 )
 import torch

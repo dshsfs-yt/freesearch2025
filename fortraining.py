@@ -25,6 +25,7 @@ CSV_PATH = "ouput.csv"  # ← 실제 파일명이 output.csv라면 수정하세�
 SAVE_DIR = Path("ckpt/ke-t5-sent-correction")
 MODEL_NAME = "KETI-AIR/ke-t5-small-ko"
 
+DATA_AMOUNT = 0.5  # 0.0~1.0 사이, 1.0이면 전체 데이터 사용
 RANDOM_SEED = 42
 MAX_SAMPLES = 0            # 0이면 전체 사용
 MAX_SRC_LEN = 256
@@ -89,7 +90,7 @@ if use_cuda:
 
 print(f"[Load] {CSV_PATH}")
 df = pd.read_csv(CSV_PATH)
-k=int(len(df)*0.8)
+k=int(len(df)*DATA_AMOUNT)
 df = df[:k]
 
 missing = [c for c in [SRC_COL, TGT_COL] if c not in df.columns]

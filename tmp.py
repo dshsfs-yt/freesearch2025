@@ -4,7 +4,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 # ▶ 이 상대경로는 "이 파일이 있는 폴더" 기준입니다.
-REL_JSON = Path("ckpt") /"checkpoint-28269" /"trainer_state.json"
+REL_JSON = Path("ckpt")/"ke-t5-sent-correction" /"checkpoint-28269" /"trainer_state.json"
 
 def main():
     base_dir = Path(__file__).resolve().parent

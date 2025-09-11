@@ -25,7 +25,7 @@ CSV_PATH = "ouput.csv"  # ← 실제 파일명이 output.csv라면 수정하세�
 SAVE_DIR = Path("ckpt/ke-t5-sent-correction")
 MODEL_NAME = "KETI-AIR/ke-t5-small-ko"
 
-DATA_AMOUNT = 0.5  # 0.0~1.0 사이, 1.0이면 전체 데이터 사용
+DATA_AMOUNT = 0.2  # 0.0~1.0 사이, 1.0이면 전체 데이터 사용
 RANDOM_SEED = 42
 MAX_SAMPLES = 0            # 0이면 전체 사용
 MAX_SRC_LEN = 256
@@ -91,6 +91,7 @@ if use_cuda:
 print(f"[Load] {CSV_PATH}")
 df = pd.read_csv(CSV_PATH)
 k=int(len(df)*DATA_AMOUNT)
+print(f"[Info] 총 {len(df)}개 샘플 중 {k}개 사용")
 df = df[:k]
 
 missing = [c for c in [SRC_COL, TGT_COL] if c not in df.columns]
@@ -193,18 +194,18 @@ def _levenshtein(a: List[str], b: List[str]) -> int:
     return dp[n][m]
 
 def compute_metrics(eval_pred):
-    # ✅ Seq2SeqTrainer + predict_with_generate=True 이면 predictions는 생성된 토큰 ID
+    #  Seq2SeqTrainer + predict_with_generate=True 이면 predictions는 생성된 토큰 ID
     preds, labels = eval_pred
     if isinstance(preds, tuple):
         preds = preds[0]
 
     pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else 0
 
-    # ✅ 정수형으로 강제 캐스팅 후 음수 마스킹값(-100) 치환
+    #  정수형으로 강제 캐스팅 후 음수 마스킹값(-100) 치환
     labels = np.asarray(labels, dtype=np.int64)
     labels[labels == -100] = pad_id
 
-    # ✅ 혹시 모를 음수 예측값도 방지
+    #  혹시 모를 음수 예측값도 방지
     preds = np.asarray(preds, dtype=np.int64)
     preds[preds < 0] = pad_id
     
@@ -255,14 +256,14 @@ args = Seq2SeqTrainingArguments(
     report_to="none",
     dataloader_pin_memory=use_cuda,
     optim=optim_choice,
-    predict_with_generate=True,       # ✅ 생성 기반 평가 활성화
+    predict_with_generate=True,       #  생성 기반 평가 활성화
     generation_max_length=MAX_TGT_LEN,
-    generation_num_beams=1,           # ✅ 메모리 절약
-    eval_accumulation_steps=4,        # ✅ CPU 메모리 완화
+    generation_num_beams=1,           #  메모리 절약
+    eval_accumulation_steps=4,        #  CPU 메모리 완화
     **precision_kwargs,
 )
 
-trainer = Seq2SeqTrainer(             # ✅ Seq2SeqTrainer 사용
+trainer = Seq2SeqTrainer(             #  Seq2SeqTrainer 사용
     model=model,
     args=args,
     train_dataset=tokenized["train"],
